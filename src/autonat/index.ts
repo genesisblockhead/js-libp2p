@@ -1,9 +1,9 @@
 import { setMaxListeners } from 'events'
+import { CodeError } from '@libp2p/interfaces/errors'
 import { logger } from '@libp2p/logger'
 import { peerIdFromBytes } from '@libp2p/peer-id'
 import { createEd25519PeerId } from '@libp2p/peer-id-factory'
 import { multiaddr, protocols } from '@multiformats/multiaddr'
-import { abortableDuplex } from 'abortable-iterator'
 import { anySignal } from 'any-signal'
 import first from 'it-first'
 import * as lp from 'it-length-prefixed'
@@ -26,6 +26,7 @@ import type { PeerRouting } from '@libp2p/interface-peer-routing'
 import type { IncomingStreamData, Registrar } from '@libp2p/interface-registrar'
 import type { TransportManager } from '@libp2p/interface-transport'
 import type { Startable } from '@libp2p/interfaces/startable'
+import { codes } from '../errors.js'
 
 const log = logger('libp2p:autonat')
 
@@ -146,11 +147,11 @@ class DefaultAutoNATService implements Startable {
       .map(ma => ma.toOptions().host)
 
     try {
-      const source = abortableDuplex(data.stream, signal)
+      signal.addEventListener('abort', () => { data.stream.abort(new CodeError('handleIncomingAutonatStream timeout', codes.ERR_TIMEOUT)) }, { once: true })
       const self = this
 
       await pipe(
-        source,
+        data.stream,
         (source) => lp.decode(source),
         async function * (stream) {
           const buf = await first(stream)
@@ -445,12 +446,12 @@ class DefaultAutoNATService implements Startable {
           const stream = await connection.newStream(this.protocol, {
             signal
           })
-          const source = abortableDuplex(stream, signal)
+          signal.addEventListener('abort', () => { stream.abort(new CodeError('verifyAddress timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
           const buf = await pipe(
             [request],
             (source) => lp.encode(source),
-            source,
+            stream,
             (source) => lp.decode(source),
             async (stream) => first(stream)
           )

@@ -4,7 +4,6 @@ import { logger } from '@libp2p/logger'
 import { peerIdFromKeys } from '@libp2p/peer-id'
 import { RecordEnvelope, PeerRecord } from '@libp2p/peer-record'
 import { type Multiaddr, multiaddr, protocols } from '@multiformats/multiaddr'
-import { abortableDuplex } from 'abortable-iterator'
 import { anySignal } from 'any-signal'
 import first from 'it-first'
 import * as lp from 'it-length-prefixed'
@@ -196,9 +195,9 @@ export class DefaultIdentifyService implements Startable {
         })
 
         // make stream abortable
-        const source = abortableDuplex(stream, signal)
+        signal.addEventListener('abort', (ev) => { stream.abort(new CodeError('pushToConnections timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
-        await source.sink(pipe(
+        await stream.sink(pipe(
           [Identify.encode({
             listenAddrs: listenAddresses.map(ma => ma.bytes),
             signedPeerRecord: signedPeerRecord.marshal(),
@@ -269,11 +268,11 @@ export class DefaultIdentifyService implements Startable {
       })
 
       // make stream abortable
-      const source = abortableDuplex(stream, signal)
+      signal.addEventListener('abort', () => { stream.abort(new CodeError('_identify timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
       const data = await pipe(
         [],
-        source,
+        stream,
         (source) => lp.decode(source, {
           maxDataLength: this.maxIdentifyMessageSize ?? MAX_IDENTIFY_MESSAGE_SIZE
         }),
@@ -388,10 +387,10 @@ export class DefaultIdentifyService implements Startable {
       })
 
       // make stream abortable
-      const source = abortableDuplex(stream, signal)
+      signal.addEventListener('abort', (ev) => { stream.abort(new CodeError('_handleIdentify timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
       const msgWithLenPrefix = pipe([message], (source) => lp.encode(source))
-      await source.sink(msgWithLenPrefix)
+      await stream.sink(msgWithLenPrefix)
     } catch (err: any) {
       log.error('could not respond to identify request', err)
     } finally {
@@ -404,6 +403,7 @@ export class DefaultIdentifyService implements Startable {
    */
   async _handlePush (data: IncomingStreamData): Promise<void> {
     const { connection, stream } = data
+    const signal = AbortSignal.timeout(this.timeout)
 
     try {
       if (this.peerId.equals(connection.remotePeer)) {
@@ -411,8 +411,8 @@ export class DefaultIdentifyService implements Startable {
       }
 
       // make stream abortable
-      const source = abortableDuplex(stream, AbortSignal.timeout(this.timeout))
-      const pb = pbStream(source, {
+      signal.addEventListener('abort', (ev) => { stream.abort(new CodeError('_handlePush timeout', codes.ERR_TIMEOUT)) }, { once: true })
+      const pb = pbStream(stream, {
         maxDataLength: this.maxIdentifyMessageSize ?? MAX_IDENTIFY_MESSAGE_SIZE
       })
       const message = await pb.readPB(Identify)
