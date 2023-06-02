@@ -11,6 +11,7 @@ import map from 'it-map'
 import parallel from 'it-parallel'
 import { pipe } from 'it-pipe'
 import isPrivateIp from 'private-ip'
+import { codes } from '../errors.js'
 import {
   MAX_INBOUND_STREAMS,
   MAX_OUTBOUND_STREAMS,
@@ -26,7 +27,6 @@ import type { PeerRouting } from '@libp2p/interface-peer-routing'
 import type { IncomingStreamData, Registrar } from '@libp2p/interface-registrar'
 import type { TransportManager } from '@libp2p/interface-transport'
 import type { Startable } from '@libp2p/interfaces/startable'
-import { codes } from '../errors.js'
 
 const log = logger('libp2p:autonat')
 
