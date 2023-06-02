@@ -161,7 +161,7 @@ export class DefaultUpgrader implements Upgrader {
     let cryptoProtocol
 
     const signal = anySignal([AbortSignal.timeout(this.inboundUpgradeTimeout)])
-    signal.addEventListener('abort', (ev) => { maConn.close(new CodeError('inbound upgrade timeout', codes.ERR_TIMEOUT)).catch((e) => { log.error('unable to close maConn', e) }) }, { once: true })
+    signal.addEventListener('abort', () => { maConn.close(new CodeError('inbound upgrade timeout', codes.ERR_TIMEOUT)).catch((e) => { log.error('unable to close maConn', e) }) }, { once: true })
 
     try {
       // fails on node < 15.4

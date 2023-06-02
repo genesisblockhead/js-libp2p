@@ -111,7 +111,7 @@ class DefaultPingService implements Startable, PingService {
       })
 
       // make stream abortable
-      signal.addEventListener('abort', () => { stream.abort(new CodeError('ping timeout', codes.ERR_TIMEOUT)) }, { once: true })
+      signal.addEventListener('abort', () => { stream?.abort(new CodeError('ping timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
       const result = await pipe(
         [data],

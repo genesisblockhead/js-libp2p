@@ -195,7 +195,7 @@ export class DefaultIdentifyService implements Startable {
         })
 
         // make stream abortable
-        signal.addEventListener('abort', (ev) => { stream.abort(new CodeError('pushToConnections timeout', codes.ERR_TIMEOUT)) }, { once: true })
+        signal.addEventListener('abort', () => { stream?.abort(new CodeError('pushToConnections timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
         await stream.sink(pipe(
           [Identify.encode({
@@ -268,7 +268,7 @@ export class DefaultIdentifyService implements Startable {
       })
 
       // make stream abortable
-      signal.addEventListener('abort', () => { stream.abort(new CodeError('_identify timeout', codes.ERR_TIMEOUT)) }, { once: true })
+      signal.addEventListener('abort', () => { stream?.abort(new CodeError('_identify timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
       const data = await pipe(
         [],
@@ -387,7 +387,7 @@ export class DefaultIdentifyService implements Startable {
       })
 
       // make stream abortable
-      signal.addEventListener('abort', (ev) => { stream.abort(new CodeError('_handleIdentify timeout', codes.ERR_TIMEOUT)) }, { once: true })
+      signal.addEventListener('abort', () => { stream.abort(new CodeError('_handleIdentify timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
       const msgWithLenPrefix = pipe([message], (source) => lp.encode(source))
       await stream.sink(msgWithLenPrefix)
@@ -411,7 +411,7 @@ export class DefaultIdentifyService implements Startable {
       }
 
       // make stream abortable
-      signal.addEventListener('abort', (ev) => { stream.abort(new CodeError('_handlePush timeout', codes.ERR_TIMEOUT)) }, { once: true })
+      signal.addEventListener('abort', () => { stream.abort(new CodeError('_handlePush timeout', codes.ERR_TIMEOUT)) }, { once: true })
       const pb = pbStream(stream, {
         maxDataLength: this.maxIdentifyMessageSize ?? MAX_IDENTIFY_MESSAGE_SIZE
       })

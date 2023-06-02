@@ -157,7 +157,7 @@ class DefaultFetchService implements Startable, FetchService {
       })
 
       // make stream abortable
-      signal.addEventListener('abort', () => { stream.abort(new CodeError('fetch timeout', codes.ERR_TIMEOUT)) }, { once: true })
+      signal.addEventListener('abort', () => { stream?.abort(new CodeError('fetch timeout', codes.ERR_TIMEOUT)) }, { once: true })
 
       log('fetch %s', key)
 
